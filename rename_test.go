@@ -42,11 +42,14 @@ func TestNormalizeReplacement(t *testing.T) {
 		input string
 		want  string
 	}{
+		{"", ""},
 		{"$1", "${1}"},
 		{"$2_$1.txt", "${2}_${1}.txt"},
 		{"${1}_$2", "${1}_${2}"},
 		{"prefix_$1_suffix", "prefix_${1}_suffix"},
 		{"no-groups", "no-groups"},
+		{"$10", "${10}"},
+		{"$1_$10", "${1}_${10}"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.input, func(t *testing.T) {
@@ -86,6 +89,30 @@ func TestCollectRenames_Flat(t *testing.T) {
 		if op.newPath != wantNew {
 			t.Errorf("op.newPath = %q, want %q", op.newPath, wantNew)
 		}
+	}
+}
+
+func TestCollectRenames_InvalidDir(t *testing.T) {
+	re := mustCompile(t, `.`)
+	if _, err := collectRenames("/nonexistent/path", re, "x", false); err == nil {
+		t.Error("expected error for non-existent dir (flat), got nil")
+	}
+	if _, err := collectRenames("/nonexistent/path", re, "x", true); err == nil {
+		t.Error("expected error for non-existent dir (recursive), got nil")
+	}
+}
+
+func TestCollectRenames_FlatIncludesDirectories(t *testing.T) {
+	dir := t.TempDir()
+	mkfiles(t, dir, []string{"old_file.txt", "old_dir/"})
+
+	re := mustCompile(t, `^old_`)
+	ops, err := collectRenames(dir, re, "new_", false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(ops) != 2 {
+		t.Fatalf("got %d ops, want 2 (file + directory)", len(ops))
 	}
 }
 
@@ -181,6 +208,27 @@ func TestExecuteRenames_Error(t *testing.T) {
 	}
 }
 
+func TestExecuteRenames_MultipleErrors(t *testing.T) {
+	dir := t.TempDir()
+	ops := []renameOp{
+		{oldPath: filepath.Join(dir, "missing1.txt"), newPath: filepath.Join(dir, "new1.txt")},
+		{oldPath: filepath.Join(dir, "missing2.txt"), newPath: filepath.Join(dir, "new2.txt")},
+	}
+	errs := executeRenames(ops)
+	if len(errs) != 2 {
+		t.Errorf("expected 2 errors, got %d", len(errs))
+	}
+}
+
+func TestConflictError_Format(t *testing.T) {
+	op := renameOp{oldPath: "old.txt", newPath: "new.txt"}
+	e := conflictError{op: op, reason: "destination already exists"}
+	want := "old.txt → new.txt: destination already exists"
+	if got := e.Error(); got != want {
+		t.Errorf("conflictError.Error() = %q, want %q", got, want)
+	}
+}
+
 func TestValidateRenames_Clean(t *testing.T) {
 	dir := t.TempDir()
 	mkfiles(t, dir, []string{"a.txt", "b.txt"})
@@ -205,6 +253,9 @@ func TestValidateRenames_DestinationExists(t *testing.T) {
 	if len(errs) != 1 {
 		t.Fatalf("expected 1 conflict, got %d", len(errs))
 	}
+	if errs[0].reason != "destination already exists" {
+		t.Errorf("unexpected reason: %q", errs[0].reason)
+	}
 }
 
 func TestValidateRenames_DuplicateDestination(t *testing.T) {
@@ -218,6 +269,28 @@ func TestValidateRenames_DuplicateDestination(t *testing.T) {
 	errs := validateRenames(ops)
 	if len(errs) != 1 {
 		t.Fatalf("expected 1 conflict (duplicate dest), got %d", len(errs))
+	}
+	// Only the second op is reported; verify it points to b.txt
+	if errs[0].op.oldPath != filepath.Join(dir, "b.txt") {
+		t.Errorf("expected conflict on b.txt, got %q", errs[0].op.oldPath)
+	}
+}
+
+func TestValidateRenames_BothConflictTypes(t *testing.T) {
+	dir := t.TempDir()
+	// "taken.txt" is an existing file that is not a rename source → triggers "already exists"
+	mkfiles(t, dir, []string{"a.txt", "b.txt", "c.txt", "taken.txt"})
+
+	ops := []renameOp{
+		// duplicate destination: both a.txt and b.txt → same.txt
+		{oldPath: filepath.Join(dir, "a.txt"), newPath: filepath.Join(dir, "same.txt")},
+		{oldPath: filepath.Join(dir, "b.txt"), newPath: filepath.Join(dir, "same.txt")},
+		// destination already exists and is not in the batch
+		{oldPath: filepath.Join(dir, "c.txt"), newPath: filepath.Join(dir, "taken.txt")},
+	}
+	errs := validateRenames(ops)
+	if len(errs) != 2 {
+		t.Fatalf("expected 2 conflicts, got %d: %v", len(errs), errs)
 	}
 }
 

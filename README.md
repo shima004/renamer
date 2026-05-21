@@ -1,14 +1,14 @@
 # renamer
 
-正規表現を使ってファイル・ディレクトリをリネームする CLI ツール。
+A CLI tool to rename files and directories using regular expressions.
 
-## インストール
+## Installation
 
 ```bash
 go install github.com/shimapaca/renamer@latest
 ```
 
-またはソースからビルド：
+Or build from source:
 
 ```bash
 git clone https://github.com/shimapaca/renamer
@@ -16,45 +16,76 @@ cd renamer
 go build -o renamer .
 ```
 
-## 使い方
+## Usage
+
+### Interactive mode
+
+Launch without arguments to enter the interactive TUI. Pattern and replacement are applied in real time as you type.
+
+```bash
+renamer [-r] [directory]
+```
+
+| Key | Action |
+| --- | ------ |
+| Type | Edit pattern / replacement, preview updates instantly |
+| `Tab` | Switch between Pattern and Replacement fields |
+| `Enter` | Execute (only when there are matches and no conflicts) |
+| `Ctrl+C` / `Esc` | Quit |
+
+### CLI mode
 
 ```bash
 renamer [-r] [-n] <pattern> <replacement> [directory]
 ```
 
-| 引数          | 説明                                                        |
-| ------------- | ----------------------------------------------------------- |
-| `pattern`     | マッチさせる RE2 正規表現（ファイル名に対して適用）         |
-| `replacement` | 置換後の文字列。キャプチャグループは `$1`, `$2`, ... で参照 |
-| `directory`   | 対象ディレクトリ（省略時はカレントディレクトリ）            |
+| Argument | Description |
+| -------- | ----------- |
+| `pattern` | RE2 regular expression matched against each filename (basename only) |
+| `replacement` | Replacement string; capture groups referenced as `$1`, `$2`, ... |
+| `directory` | Target directory (default: current directory) |
 
-| フラグ | 説明                                                 |
-| ------ | ---------------------------------------------------- |
-| `-r`   | サブディレクトリを再帰的に処理する                   |
-| `-n`   | ドライラン：プレビューのみ表示し、確認・実行はしない |
+| Flag | Description |
+| ---- | ----------- |
+| `-r` | Recursively process subdirectories |
+| `-n` | Dry run: show preview without prompting |
 
-## 動作
+## How it works
 
-1. pattern にマッチするファイル・ディレクトリ名を検索
-2. リネーム結果をプレビュー表示
-3. `y` を入力すると実行、それ以外は中断
+1. Finds files and directories whose names match `pattern`
+2. Shows a preview of all renames
+3. Aborts if any conflict is detected (see below)
+4. Prompts `[y/N]` — type `y` to execute, anything else to abort
 
-```bash
+```text
 Preview:
   ./001_foo.txt → ./foo_001.txt
   ./002_bar.txt → ./bar_002.txt
 Proceed? [y/N]:
 ```
 
-## 例
+## Conflict detection
 
-### 連番とファイル名を入れ替える
+Renames are validated before execution. The following are treated as conflicts and will abort the operation:
+
+- The destination file already exists (and is not itself being renamed away in the same batch)
+- Two or more files would be renamed to the same destination
+
+```text
+Preview:
+  ./a.txt → ./existing.txt  [ERROR: destination already exists]
+1 conflict(s) found. Aborted.
+```
+
+## Examples
+
+### Swap number prefix and filename
 
 ```bash
 renamer '(\d+)_(.+)\.txt' '$2_$1.txt' ./files/
 ```
 
-```bash
+```text
 Preview:
   files/001_foo.txt → files/foo_001.txt
   files/002_bar.txt → files/bar_002.txt
@@ -63,35 +94,37 @@ Renamed: files/001_foo.txt → files/foo_001.txt
 Renamed: files/002_bar.txt → files/bar_002.txt
 ```
 
-### 拡張子を一括変換（ドライラン）
+### Bulk rename extensions (dry run)
 
 ```bash
 renamer -n '\.jpeg$' '.jpg' ./images/
 ```
 
-### プレフィックスを削除（再帰）
+### Remove prefix recursively
 
 ```bash
 renamer -r '^tmp_' '' ./data/
 ```
 
-### スペースをアンダースコアに置換
+### Replace spaces with underscores
 
 ```bash
 renamer ' ' '_'
 ```
 
-## キャプチャグループの参照
+## Capture groups
 
-`$1`, `$2`, ... でキャプチャグループを参照できます。`$1_suffix` のように直後に `_` などが続く場合も正しく処理されます（内部的に `${1}` 形式に変換）。
+Reference capture groups with `$1`, `$2`, .... Adjacency to `_` and other characters is handled correctly (internally converted to `${1}` form).
 
 ```bash
-# $2_$1 → 問題なく動作する
 renamer '([a-z]+)_([0-9]+)' '$2_$1'
 ```
 
-## 注意事項
+## Notes
 
-- パターンはファイル名（basename）に対してマッチします。パスは含みません
-- `-r` で再帰処理する場合、深いパスから順にリネームするため、ディレクトリをリネームしても子エントリのパスが無効になりません
-- 同名のファイルが既に存在する場合は OS のエラーになります
+- Pattern is matched against the filename (basename) only, not the full path
+- In recursive mode (`-r`), deeper paths are renamed first so that renaming a directory does not invalidate its children's paths
+
+## License
+
+[MIT](LICENSE)

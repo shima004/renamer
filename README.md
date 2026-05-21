@@ -1,5 +1,11 @@
 # renamer
 
+[![Release](https://github.com/shimapaca/renamer/actions/workflows/release.yml/badge.svg)](https://github.com/shimapaca/renamer/actions/workflows/release.yml)
+[![GitHub release](https://img.shields.io/github/v/release/shimapaca/renamer)](https://github.com/shimapaca/renamer/releases)
+[![Go version](https://img.shields.io/github/go-mod/go-version/shimapaca/renamer)](go.mod)
+[![Go Report Card](https://goreportcard.com/badge/github.com/shimapaca/renamer)](https://goreportcard.com/report/github.com/shimapaca/renamer)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 A CLI tool to rename files and directories using regular expressions.
 
 ## Installation

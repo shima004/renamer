@@ -41,14 +41,14 @@ type tuiModel struct {
 
 func newTUIModel(dir string, recursive bool) tuiModel {
 	pattern := textinput.New()
-	pattern.Placeholder = "RE2 正規表現"
+	pattern.Placeholder = "RE2 pattern"
 	pattern.Focus()
 	pattern.Width = 40
 	pattern.PromptStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("5"))
 	pattern.TextStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("15"))
 
 	replacement := textinput.New()
-	replacement.Placeholder = "置換文字列 ($1, $2, ...)"
+	replacement.Placeholder = "replacement ($1, $2, ...)"
 	replacement.Width = 40
 	replacement.PromptStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("241"))
 	replacement.TextStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("15"))
@@ -139,10 +139,10 @@ func (m tuiModel) View() string {
 		fmt.Fprintf(&sb, "%s\n", errorStyle.Render("Error: "+m.parseErr.Error()))
 
 	case m.inputs[fieldPattern].Value() == "":
-		fmt.Fprintf(&sb, "%s\n", hintStyle.Render("Pattern を入力してください"))
+		fmt.Fprintf(&sb, "%s\n", hintStyle.Render("Enter a pattern"))
 
 	case len(m.ops) == 0:
-		fmt.Fprintf(&sb, "%s\n", hintStyle.Render("マッチするファイルがありません"))
+		fmt.Fprintf(&sb, "%s\n", hintStyle.Render("No files matched"))
 
 	default:
 		maxRows := 20
@@ -158,16 +158,16 @@ func (m tuiModel) View() string {
 			conflictPaths[c.op.oldPath] = c.reason
 		}
 
-		header := fmt.Sprintf("Preview (%d 件):", len(m.ops))
+		header := fmt.Sprintf("Preview (%d files):", len(m.ops))
 		if len(m.conflicts) > 0 {
-			header += conflictStyle.Render(fmt.Sprintf("  ⚠ 競合 %d 件", len(m.conflicts)))
+			header += conflictStyle.Render(fmt.Sprintf("  ⚠ %d conflict(s)", len(m.conflicts)))
 		}
 		fmt.Fprintf(&sb, "%s\n", countStyle.Render(header))
 
 		arrow := arrowStyle.Render(" → ")
 		for i, op := range m.ops {
 			if i >= maxRows {
-				fmt.Fprintf(&sb, "%s\n", hintStyle.Render(fmt.Sprintf("  ... 他 %d 件", len(m.ops)-maxRows)))
+				fmt.Fprintf(&sb, "%s\n", hintStyle.Render(fmt.Sprintf("  ... and %d more", len(m.ops)-maxRows)))
 				break
 			}
 			if reason, bad := conflictPaths[op.oldPath]; bad {
@@ -179,9 +179,9 @@ func (m tuiModel) View() string {
 	}
 
 	sb.WriteString("\n")
-	hints := []string{"[Tab] フィールド切替", "[Ctrl+C/Esc] 終了"}
+	hints := []string{"[Tab] Switch field", "[Ctrl+C/Esc] Quit"}
 	if len(m.ops) > 0 && len(m.conflicts) == 0 {
-		hints = append([]string{"[Enter] 実行"}, hints...)
+		hints = append([]string{"[Enter] Execute"}, hints...)
 	}
 	sb.WriteString(hintStyle.Render(strings.Join(hints, "  ")))
 

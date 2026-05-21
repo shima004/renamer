@@ -91,14 +91,14 @@ func validateRenames(ops []renameOp) []conflictError {
 	var errs []conflictError
 	for _, op := range ops {
 		if prev, dup := seen[op.newPath]; dup {
-			errs = append(errs, conflictError{op, fmt.Sprintf("宛先が %s と重複", prev)})
+			errs = append(errs, conflictError{op, fmt.Sprintf("destination conflicts with %s", prev)})
 			continue
 		}
 		seen[op.newPath] = op.oldPath
 
 		if _, isSrcInBatch := oldPaths[op.newPath]; !isSrcInBatch {
 			if _, err := os.Lstat(op.newPath); err == nil {
-				errs = append(errs, conflictError{op, "宛先ファイルが既に存在します"})
+				errs = append(errs, conflictError{op, "destination already exists"})
 			}
 		}
 	}

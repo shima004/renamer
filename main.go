@@ -75,7 +75,7 @@ func main() {
 	}
 
 	if len(conflicts) > 0 {
-		fmt.Fprintf(os.Stderr, "%d 件の競合があります。実行できません。\n", len(conflicts))
+		fmt.Fprintf(os.Stderr, "%d conflict(s) found. Aborted.\n", len(conflicts))
 		os.Exit(1)
 	}
 

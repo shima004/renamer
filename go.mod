@@ -1,4 +1,4 @@
-module github.com/shimapaca/renamer
+module github.com/shima004/renamer
 
 go 1.26.2
 

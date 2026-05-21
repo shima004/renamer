@@ -1,9 +1,9 @@
 # renamer
 
-[![Release](https://github.com/shimapaca/renamer/actions/workflows/release.yml/badge.svg)](https://github.com/shimapaca/renamer/actions/workflows/release.yml)
-[![GitHub release](https://img.shields.io/github/v/release/shimapaca/renamer)](https://github.com/shimapaca/renamer/releases)
-[![Go version](https://img.shields.io/github/go-mod/go-version/shimapaca/renamer)](go.mod)
-[![Go Report Card](https://goreportcard.com/badge/github.com/shimapaca/renamer)](https://goreportcard.com/report/github.com/shimapaca/renamer)
+[![Release](https://github.com/shima004/renamer/actions/workflows/release.yml/badge.svg)](https://github.com/shima004/renamer/actions/workflows/release.yml)
+[![GitHub release](https://img.shields.io/github/v/release/shima004/renamer)](https://github.com/shima004/renamer/releases)
+[![Go version](https://img.shields.io/github/go-mod/go-version/shima004/renamer)](go.mod)
+[![Go Report Card](https://goreportcard.com/badge/github.com/shima004/renamer)](https://goreportcard.com/report/github.com/shima004/renamer)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 A CLI tool to rename files and directories using regular expressions.
@@ -11,13 +11,13 @@ A CLI tool to rename files and directories using regular expressions.
 ## Installation
 
 ```bash
-go install github.com/shimapaca/renamer@latest
+go install github.com/shima004/renamer@latest
 ```
 
 Or build from source:
 
 ```bash
-git clone https://github.com/shimapaca/renamer
+git clone https://github.com/shima004/renamer
 cd renamer
 go build -o renamer .
 ```
@@ -32,12 +32,12 @@ Launch without arguments to enter the interactive TUI. Pattern and replacement a
 renamer [-r] [directory]
 ```
 
-| Key | Action |
-| --- | ------ |
-| Type | Edit pattern / replacement, preview updates instantly |
-| `Tab` | Switch between Pattern and Replacement fields |
-| `Enter` | Execute (only when there are matches and no conflicts) |
-| `Ctrl+C` / `Esc` | Quit |
+| Key              | Action                                                 |
+| ---------------- | ------------------------------------------------------ |
+| Type             | Edit pattern / replacement, preview updates instantly  |
+| `Tab`            | Switch between Pattern and Replacement fields          |
+| `Enter`          | Execute (only when there are matches and no conflicts) |
+| `Ctrl+C` / `Esc` | Quit                                                   |
 
 ### CLI mode
 
@@ -45,15 +45,15 @@ renamer [-r] [directory]
 renamer [-r] [-n] <pattern> <replacement> [directory]
 ```
 
-| Argument | Description |
-| -------- | ----------- |
-| `pattern` | RE2 regular expression matched against each filename (basename only) |
-| `replacement` | Replacement string; capture groups referenced as `$1`, `$2`, ... |
-| `directory` | Target directory (default: current directory) |
+| Argument      | Description                                                          |
+| ------------- | -------------------------------------------------------------------- |
+| `pattern`     | RE2 regular expression matched against each filename (basename only) |
+| `replacement` | Replacement string; capture groups referenced as `$1`, `$2`, ...     |
+| `directory`   | Target directory (default: current directory)                        |
 
-| Flag | Description |
-| ---- | ----------- |
-| `-r` | Recursively process subdirectories |
+| Flag | Description                             |
+| ---- | --------------------------------------- |
+| `-r` | Recursively process subdirectories      |
 | `-n` | Dry run: show preview without prompting |
 
 ## How it works
